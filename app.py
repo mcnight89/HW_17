@@ -75,6 +75,8 @@ genres_schema = GenreSchema(many=True)
 
 api = Api(app)
 movie_ns = api.namespace('movies')
+director_ns = api.namespace('director')
+genre_ns = api.namespace('genres')
 
 
 @movie_ns.route('/')
@@ -94,8 +96,15 @@ class MoviesView(Resource):
             return movies_schema.dump(movies), 200
 
         """return all movies"""
-        all_movies = Movie.query.all()
+        all_movies = db.session.query(Movie)
         return movies_schema.dump(all_movies), 200
+
+    def post(self):
+        req_json = request.json
+        new_movie = Movie(**req_json)
+        with db.session.begin():
+            db.session.add(new_movie)
+        return "", 201
 
 
 @movie_ns.route('/<int:mid>')
@@ -104,6 +113,109 @@ class MovieView(Resource):
         """return movie_by_id"""
         movie = Movie.query.get(mid)
         return movie_schema.dump(movie), 200
+
+    def put(self, mid: int):
+        movie = Movie.query.get(mid)
+        req_json = request.json
+
+        movie.id = req_json.get("id")
+        movie.title = req_json.get("title")
+        movie.description = req_json.get("description")
+        movie.trailer = req_json.get("trailer")
+        movie.year = req_json.get("year")
+        movie.rating = req_json.get("rating")
+        movie.genre_id = req_json.get("genre_id")
+        movie.genre = req_json.get("genre")
+        movie.director_id = req_json.get("director_id")
+        movie.director = req_json.get("director")
+
+        db.session.add(movie)
+        db.session.commit()
+        return "", 204
+
+    def delete(self, mid: int):
+        movie = Movie.query.get(mid)
+        db.session.delete(movie)
+        db.session.commit()
+        return "", 204
+
+
+@director_ns.route('/')
+class DirectorView(Resource):
+    def get(self):
+        all_director = db.session.query(Director)
+        return directors_schema.dump(all_director)
+
+    def post(self):
+        req_json = request.json
+        new_director = Director(**req_json)
+        with db.session.begin():
+            db.session.add(new_director)
+        return "", 201
+
+
+@director_ns.route('/<int:mid>')
+class DirectorView(Resource):
+
+    def get(self, mid: int):
+        director = Director.query.get(mid)
+        return director_schema.dump(director), 200
+
+    def put(self, mid: int):
+        director = Director.query.get(mid)
+        req_json = request.json
+
+        director.id = req_json.get("id")
+        director.name = req_json.get("name")
+
+        db.session.add(director)
+        db.session.commit()
+        return "", 204
+
+    def delete(self, mid: int):
+        director = Director.query.get(mid)
+        db.session.delete(director)
+        db.session.commit()
+        return "", 204
+
+
+@genre_ns.route('/')
+class GenreView(Resource):
+    def get(self):
+        all_genre = db.session.query(Genre)
+        return genres_schema.dump(all_genre)
+
+    def post(self):
+        req_json = request.json
+        new_genre = Genre(**req_json)
+        with db.session.begin():
+            db.session.add(new_genre)
+        return "", 201
+
+
+@genre_ns.route('/<int:mid>')
+class GenreView(Resource):
+
+    def get(self, mid: int):
+        genre = Genre.query.get(mid)
+        return genre_schema.dump(genre), 200
+
+    def put(self, mid: int):
+        genre = Genre.query.get(mid)
+        req_json = request.json
+
+        genre.id = req_json.get("id")
+        genre.name = req_json.get("name")
+
+        db.session.add(genre)
+        db.session.commit()
+        return "", 204
+
+    def delete(self, mid: int):
+        genre = Genre.query.get(mid)
+        db.session.delete(genre)
+        db.session.commit()
+        return "", 204
 
 
 if __name__ == '__main__':
